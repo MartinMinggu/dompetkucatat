@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="DompetKu - Aplikasi pencatatan keuangan pribadi yang ringan dan modern">
+
+  <title>DompetKu — Catatan Keuangan</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.svg">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+
+  <!-- ========== LOADING OVERLAY ========== -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="spinner" style="width:40px;height:40px;border-width:4px"></div>
+    <span style="color:var(--text-secondary);font-size:0.875rem">Memuat DompetKu...</span>
+  </div>
+
+  <!-- ========== SETUP VIEW (Supabase Config) ========== -->
+  <div id="setup-view" class="auth-container hidden">
+    <div class="auth-card" style="max-width:460px">
+      <div class="auth-logo">
+        <div class="logo-icon">⚙️</div>
+        <h1>Setup DompetKu</h1>
+        <p>Hubungkan ke Supabase project Anda</p>
+      </div>
+
+      <div class="setup-info">
+        <p>Untuk menggunakan DompetKu, Anda perlu membuat project di <a href="https://supabase.com" target="_blank"
+            rel="noopener">Supabase</a> (gratis) dan memasukkan kredensial di bawah ini.</p>
+      </div>
+
+      <form id="setup-form">
+        <div class="form-group">
+          <label for="setup-url">Supabase Project URL</label>
+          <input type="url" id="setup-url" class="form-control" placeholder="https://xxxxx.supabase.co" required>
+        </div>
+        <div class="form-group">
+          <label for="setup-key">Supabase Anon Key</label>
+          <textarea id="setup-key" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIs..." required rows="3"
+            style="resize:vertical;font-size:0.8125rem;font-family:monospace"></textarea>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:16px">
+          💡 Temukan di Supabase Dashboard → Settings → API → <strong>Project URL</strong> & <strong>anon
+            public</strong> key.
+        </p>
+        <button type="submit" class="btn btn-primary">Simpan & Lanjutkan</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== AUTH VIEW ========== -->
+  <div id="auth-view" class="auth-container hidden">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-icon">💰</div>
+        <h1>DompetKu</h1>
+        <p>Catatan keuangan pribadimu</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Masuk</button>
+        <button class="auth-tab" data-tab="register">Daftar</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email</label>
+          <input type="email" id="login-email" class="form-control" placeholder="nama@email.com" required
+            autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-control" placeholder="Masukkan password" required
+            autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary">Masuk</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" class="hidden">
+        <div class="form-group">
+          <label for="register-email">Email</label>
+          <input type="email" id="register-email" class="form-control" placeholder="nama@email.com" required
+            autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="register-password">Password</label>
+          <input type="password" id="register-password" class="form-control" placeholder="Minimal 6 karakter" required
+            minlength="6" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label for="register-confirm">Konfirmasi Password</label>
+          <input type="password" id="register-confirm" class="form-control" placeholder="Ketik ulang password" required
+            minlength="6" autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary">Daftar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========== APP VIEW ========== -->
+  <div id="app-view" class="hidden">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-dot"></span>
+        DompetKu
+      </div>
+      <div class="header-actions">
+        <button id="install-btn" class="btn-icon hidden" title="Install App">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+        </button>
+        <button id="btn-settings" class="btn-icon" title="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+        <button id="btn-logout" class="btn-icon" title="Logout">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-container">
+
+      <!-- ===== DASHBOARD VIEW ===== -->
+      <div id="view-dashboard" class="view active">
+        <h2 class="view-title">Dashboard</h2>
+
+        <!-- Summary Cards -->
+        <div id="dashboard-summary" class="summary-grid">
+          <div class="summary-card balance">
+            <div class="label"><span class="icon-circle">💎</span> Saldo</div>
+            <div class="amount">Rp0</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-card income">
+              <div class="label"><span class="icon-circle">📈</span> Pemasukan</div>
+              <div class="amount">Rp0</div>
+            </div>
+            <div class="summary-card expense">
+              <div class="label"><span class="icon-circle">📉</span> Pengeluaran</div>
+              <div class="amount">Rp0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Debt Summary Cards -->
+        <div class="summary-row" style="margin-top:0">
+          <div class="summary-card debt-utang">
+            <div class="label"><span class="icon-circle">🔴</span> Utang</div>
+            <div class="amount" id="dashboard-utang">Rp0</div>
+            <div class="debt-count" id="dashboard-utang-count">0 aktif</div>
+          </div>
+          <div class="summary-card debt-piutang">
+            <div class="label"><span class="icon-circle">🔵</span> Piutang</div>
+            <div class="amount" id="dashboard-piutang">Rp0</div>
+            <div class="debt-count" id="dashboard-piutang-count">0 aktif</div>
+          </div>
+        </div>
+
+        <!-- Expense by Category Chart -->
+        <div class="chart-section">
+          <h3>Pengeluaran per Kategori</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-doughnut"></canvas>
+          </div>
+        </div>
+
+        <!-- 6-Month Trend Chart -->
+        <div class="chart-section">
+          <h3>Tren 6 Bulan Terakhir</h3>
+          <div class="chart-wrapper">
+            <canvas id="chart-bar"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="section-header">
+          <h3>Transaksi Terbaru</h3>
+        </div>
+        <div id="recent-transactions" class="tx-list">
+          <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <h3>Belum ada transaksi</h3>
+            <p>Tap tombol + untuk menambah transaksi pertama</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TRANSACTIONS VIEW ===== -->
+      <div id="view-transactions" class="view">
+        <h2 class="view-title">Transaksi</h2>
+
+        <!-- Search & Filter -->
+        <div class="filter-bar">
+          <div class="search-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" id="search-input" placeholder="Cari transaksi...">
+          </div>
+          <select id="filter-type" class="filter-select">
+            <option value="">Semua Tipe</option>
+            <option value="income">Pemasukan</option>
+            <option value="expense">Pengeluaran</option>
+          </select>
+        </div>
+
+        <div class="filter-bar">
+          <select id="filter-category" class="filter-select" style="flex:1">
+            <option value="">Semua Kategori</option>
+          </select>
+        </div>
+
+        <div class="filter-bar date-filter">
+          <input type="date" id="filter-date-from" title="Dari tanggal">
+          <input type="date" id="filter-date-to" title="Sampai tanggal">
+        </div>
+
+        <!-- Transaction List -->
+        <div id="transaction-list"></div>
+      </div>
+
+      <!-- ===== CATEGORIES VIEW ===== -->
+      <div id="view-categories" class="view">
+        <h2 class="view-title">Kategori</h2>
+
+        <!-- Add Category Form -->
+        <div class="add-category-row">
+          <input type="text" id="new-cat-icon" class="form-control" placeholder="📁"
+            style="width:60px;text-align:center" maxlength="2">
+          <input type="text" id="new-cat-name" class="form-control" placeholder="Nama kategori" style="flex:1">
+          <select id="new-cat-type" class="form-control" style="width:auto">
+            <option value="expense">Pengeluaran</option>
+            <option value="income">Pemasukan</option>
+            <option value="both">Keduanya</option>
+          </select>
+          <button id="btn-add-category" class="btn btn-primary btn-sm" style="width:auto;white-space:nowrap">+
+            Tambah</button>
+        </div>
+
+        <!-- Categories List -->
+        <div id="categories-list" class="categories-grid"></div>
+      </div>
+
+      <!-- ===== REPORT VIEW ===== -->
+      <div id="view-report" class="view">
+        <h2 class="view-title">Laporan Bulanan</h2>
+
+        <!-- Month Selector -->
+        <div class="month-selector">
+          <button id="report-prev" class="btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <span id="report-month-label" class="month-label">Februari 2026</span>
+          <button id="report-next" class="btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Summary -->
+        <div id="report-summary" class="report-summary"></div>
+
+        <!-- Category Breakdown -->
+        <div class="section-header" style="margin-top:24px">
+          <h3>Detail Pengeluaran</h3>
+        </div>
+        <div id="report-categories" class="report-category-list"></div>
+      </div>
+
+      <!-- ===== DEBTS VIEW ===== -->
+      <div id="view-debts" class="view">
+        <h2 class="view-title">Utang & Piutang</h2>
+
+        <!-- Debt Type Toggle -->
+        <div class="debt-tab-toggle">
+          <button class="debt-tab active" data-dtype="all">Semua</button>
+          <button class="debt-tab" data-dtype="utang">🔴 Utang</button>
+          <button class="debt-tab" data-dtype="piutang">🔵 Piutang</button>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="debt-status-filter">
+          <button class="debt-status-btn active" data-dstatus="active">Belum Lunas</button>
+          <button class="debt-status-btn" data-dstatus="settled">Lunas</button>
+          <button class="debt-status-btn" data-dstatus="all">Semua</button>
+        </div>
+
+        <!-- Add Debt Button -->
+        <button id="btn-add-debt" class="btn btn-primary" style="margin-bottom:20px;gap:6px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Tambah Utang/Piutang
+        </button>
+
+        <!-- Debt List -->
+        <div id="debt-list" class="debt-list">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h3>Belum ada catatan</h3>
+            <p>Tap tombol di atas untuk mencatat utang atau piutang</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== DEBT DETAIL VIEW ===== -->
+      <div id="view-debt-detail" class="view">
+        <button id="btn-back-debts" class="btn btn-ghost" style="margin-bottom:16px;padding-left:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Kembali
+        </button>
+        <div id="debt-detail-content"></div>
+      </div>
+
+    </main>
+
+    <!-- ========== BOTTOM NAVIGATION ========== -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-view="view-dashboard">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </svg>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" data-view="view-transactions">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        <span>Transaksi</span>
+      </button>
+      <button class="nav-item nav-add" data-view="add-transaction">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      <button class="nav-item" data-view="view-debts">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+        <span>Utang</span>
+      </button>
+      <button class="nav-item" data-view="view-report">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+        <span>Laporan</span>
+      </button>
+    </nav>
+
+    <!-- ========== TRANSACTION MODAL ========== -->
+    <div id="modal-overlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 id="modal-title">Tambah Transaksi</h2>
+          <button id="modal-close" class="btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <form id="tx-form" data-edit-id="">
+          <!-- Type Toggle -->
+          <div class="type-toggle">
+            <button type="button" class="type-btn expense-btn active" data-type="expense">Pengeluaran</button>
+            <button type="button" class="type-btn income-btn" data-type="income">Pemasukan</button>
+          </div>
+
+          <div class="form-group">
+            <label for="tx-amount">Jumlah (Rp)</label>
+            <input type="number" id="tx-amount" class="form-control" placeholder="50000" required min="1"
+              inputmode="numeric">
+          </div>
+
+          <div class="form-group">
+            <label for="tx-category">Kategori</label>
+            <select id="tx-category" class="form-control">
+              <option value="">Pilih Kategori</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="tx-description">Deskripsi (opsional)</label>
+            <input type="text" id="tx-description" class="form-control" placeholder="Makan siang di kantin">
+          </div>
+
+          <div class="form-group">
+            <label for="tx-date">Tanggal</label>
+            <input type="date" id="tx-date" class="form-control" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:8px">Simpan Transaksi</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========== DEBT MODAL ========== -->
+    <div id="debt-modal-overlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 id="debt-modal-title">Tambah Utang/Piutang</h2>
+          <button id="debt-modal-close" class="btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <form id="debt-form" data-edit-id="">
+          <!-- Debt Type Toggle -->
+          <div class="type-toggle">
+            <button type="button" class="type-btn utang-btn active" data-type="utang">🔴 Utang</button>
+            <button type="button" class="type-btn piutang-btn" data-type="piutang">🔵 Piutang</button>
+          </div>
+
+          <div class="form-group">
+            <label for="debt-person">Nama Orang</label>
+            <input type="text" id="debt-person" class="form-control" placeholder="Nama orang yang terkait" required>
+          </div>
+
+          <div class="form-group">
+            <label for="debt-amount">Jumlah (Rp)</label>
+            <input type="number" id="debt-amount" class="form-control" placeholder="500000" required min="1"
+              inputmode="numeric">
+          </div>
+
+          <div class="form-group">
+            <label for="debt-description">Deskripsi (opsional)</label>
+            <input type="text" id="debt-description" class="form-control" placeholder="Keterangan utang/piutang">
+          </div>
+
+          <div class="form-group">
+            <label for="debt-due-date">Jatuh Tempo (opsional)</label>
+            <input type="date" id="debt-due-date" class="form-control">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:8px">Simpan</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========== PAYMENT MODAL ========== -->
+    <div id="payment-modal-overlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 id="payment-modal-title">Tambah Pembayaran</h2>
+          <button id="payment-modal-close" class="btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div id="payment-remaining" class="payment-remaining-info"></div>
+
+        <form id="payment-form" data-debt-id="">
+          <div class="form-group">
+            <label for="payment-amount">Jumlah Bayar (Rp)</label>
+            <input type="number" id="payment-amount" class="form-control" placeholder="100000" required min="1"
+              inputmode="numeric">
+          </div>
+
+          <div class="form-group">
+            <label for="payment-note">Catatan (opsional)</label>
+            <input type="text" id="payment-note" class="form-control" placeholder="Catatan pembayaran">
+          </div>
+
+          <div class="form-group">
+            <label for="payment-date">Tanggal Bayar</label>
+            <input type="date" id="payment-date" class="form-control" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:8px">Simpan Pembayaran</button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- App Script (ES Module) -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+
+</html>
