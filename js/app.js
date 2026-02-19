@@ -5,6 +5,7 @@ import {
     getMonthlyReport, getLast6MonthsSummary, todayISO,
     getDebts, addDebt, updateDebt, deleteDebt,
     getDebtPayments, addDebtPayment, deleteDebtPayment, getDebtSummary,
+    getStockTransactions, addStockTransaction, deleteStockTransaction, getStockSummary,
     hasSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig
 } from './supabase-client.js';
 import { initAuth, setAuthCallback, signUp, signIn, signOut, getSession } from './auth.js';
@@ -15,7 +16,9 @@ import {
     openModal, closeModal, resetForm, fillForm,
     renderDebtList, renderDebtDetail, renderDebtDashboardSummary,
     openDebtModal, closeDebtModal, resetDebtForm, fillDebtForm,
-    openPaymentModal, closePaymentModal
+    openPaymentModal, closePaymentModal,
+    renderStockSummary, renderStockTransactions,
+    openStockModal, closeStockModal, resetStockForm
 } from './ui.js';
 import { renderDoughnutChart, renderBarChart } from './chart.js';
 import { registerSW } from './sw-register.js';
@@ -28,6 +31,7 @@ let reportMonth = new Date().getMonth() + 1;
 let debtFilterType = 'all';
 let debtFilterStatus = 'active';
 let currentDebtId = null;
+let stockFilterType = 'all';
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
@@ -76,6 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindFilterEvents();
     bindReportEvents();
     bindDebtEvents();
+    bindStockEvents();
     bindSettingsEvents();
 });
 
@@ -191,6 +196,7 @@ function bindNavEvents() {
             if (viewId === 'view-categories') await loadCategories();
             if (viewId === 'view-report') await loadReport();
             if (viewId === 'view-debts') await loadDebts();
+            if (viewId === 'view-stocks') await loadStocks();
         });
     });
 }
@@ -734,6 +740,113 @@ function bindDebtEvents() {
                 await deleteDebtPayment(paymentId, debtId);
                 showToast('Pembayaran dihapus');
                 await loadDebtDetail(debtId);
+            } catch (err) {
+                showToast('Gagal menghapus: ' + err.message, 'error');
+            }
+        }
+    });
+}
+
+// ========== STOCK / TRADING PORTFOLIO ==========
+let stockFilterTypeValue = 'all';
+
+async function loadStocks(filters = {}) {
+    try {
+        const summary = await getStockSummary();
+        renderStockSummary(summary);
+
+        const txFilters = {};
+        if (stockFilterTypeValue !== 'all') txFilters.type = stockFilterTypeValue;
+        const transactions = await getStockTransactions(txFilters);
+        renderStockTransactions(transactions);
+    } catch (err) {
+        console.error('[Stocks]', err);
+        showToast('Gagal memuat data saham', 'error');
+    }
+}
+
+function bindStockEvents() {
+    // Quick action buttons
+    document.querySelectorAll('.stock-quick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const stype = btn.dataset.stype;
+            resetStockForm();
+            // Set the type in the modal
+            document.querySelectorAll('#stock-form .stock-type-btn').forEach(b => b.classList.remove('active'));
+            const targetBtn = document.querySelector(`#stock-form .${stype}-btn`);
+            if (targetBtn) targetBtn.classList.add('active');
+            const typeLabels = { deposit: 'Deposit Dana', withdraw: 'Tarik Dana', profit: 'Catat Profit', loss: 'Catat Loss' };
+            openStockModal(typeLabels[stype] || 'Tambah Transaksi Saham');
+        });
+    });
+
+    // Filter tabs
+    document.querySelectorAll('.stock-filter-tab').forEach(tab => {
+        tab.addEventListener('click', async () => {
+            document.querySelectorAll('.stock-filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            stockFilterTypeValue = tab.dataset.sfilter;
+            await loadStocks();
+        });
+    });
+
+    // Stock modal close
+    document.getElementById('stock-modal-close')?.addEventListener('click', closeStockModal);
+    document.getElementById('stock-modal-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'stock-modal-overlay') closeStockModal();
+    });
+
+    // Stock type toggle in form
+    document.querySelectorAll('#stock-form .stock-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#stock-form .stock-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // Stock form submit
+    const stockForm = document.getElementById('stock-form');
+    if (stockForm) {
+        stockForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const activeTypeBtn = document.querySelector('#stock-form .stock-type-btn.active');
+            const type = activeTypeBtn?.dataset.stype || 'deposit';
+            const amount = parseInt(document.getElementById('stock-amount').value, 10);
+            const description = document.getElementById('stock-description').value.trim();
+            const date = document.getElementById('stock-date').value || todayISO();
+
+            if (!amount || amount <= 0) {
+                showToast('Masukkan jumlah yang valid', 'error');
+                return;
+            }
+
+            try {
+                await addStockTransaction({ type, amount, description, date });
+                const typeLabels = { deposit: 'Deposit', withdraw: 'Withdraw', profit: 'Profit', loss: 'Loss' };
+                showToast(`${typeLabels[type]} berhasil dicatat ✅`);
+                closeStockModal();
+                if (currentView === 'view-stocks') await loadStocks();
+                if (currentView === 'view-dashboard') await loadDashboard();
+            } catch (err) {
+                console.error('[StockForm]', err);
+                showToast('Gagal menyimpan: ' + err.message, 'error');
+            }
+        });
+    }
+
+    // Delete stock transaction (click on item)
+    document.addEventListener('click', async (e) => {
+        const stockItem = e.target.closest('.stock-tx');
+        if (!stockItem) return;
+
+        const id = stockItem.dataset.stockId;
+        if (!id) return;
+
+        if (confirm('Hapus transaksi saham ini?')) {
+            try {
+                await deleteStockTransaction(id);
+                showToast('Transaksi dihapus 🗑️');
+                if (currentView === 'view-stocks') await loadStocks();
             } catch (err) {
                 showToast('Gagal menghapus: ' + err.message, 'error');
             }

@@ -1754,6 +1754,242 @@ select.form-control {
   text-decoration: underline;
 }
 
+/* ========== STOCK/TRADING PORTFOLIO ========== */
+:root {
+  --stock-deposit: #3b82f6;
+  --stock-deposit-bg: rgba(59, 130, 246, 0.12);
+  --stock-withdraw: #f97316;
+  --stock-withdraw-bg: rgba(249, 115, 22, 0.12);
+  --stock-profit: #10b981;
+  --stock-profit-bg: rgba(16, 185, 129, 0.12);
+  --stock-loss: #f43f5e;
+  --stock-loss-bg: rgba(244, 63, 94, 0.12);
+  --stock-net: #8b5cf6;
+  --stock-net-bg: rgba(139, 92, 246, 0.12);
+}
+
+/* Stock summary cards */
+.summary-card.stock-net-value::before {
+  background: linear-gradient(90deg, var(--stock-net), #a78bfa);
+}
+
+.summary-card.stock-net-value .icon-circle {
+  background: var(--stock-net-bg);
+}
+
+.summary-card.stock-net-value .amount {
+  color: var(--stock-net);
+}
+
+.summary-card.stock-deposit::before {
+  background: linear-gradient(90deg, var(--stock-deposit), #60a5fa);
+}
+
+.summary-card.stock-deposit .icon-circle {
+  background: var(--stock-deposit-bg);
+}
+
+.summary-card.stock-deposit .amount {
+  color: var(--stock-deposit);
+}
+
+.summary-card.stock-withdraw::before {
+  background: linear-gradient(90deg, var(--stock-withdraw), #fb923c);
+}
+
+.summary-card.stock-withdraw .icon-circle {
+  background: var(--stock-withdraw-bg);
+}
+
+.summary-card.stock-withdraw .amount {
+  color: var(--stock-withdraw);
+}
+
+.summary-card.stock-profit::before {
+  background: linear-gradient(90deg, var(--stock-profit), #34d399);
+}
+
+.summary-card.stock-profit .icon-circle {
+  background: var(--stock-profit-bg);
+}
+
+.summary-card.stock-profit .amount {
+  color: var(--stock-profit);
+}
+
+.summary-card.stock-loss::before {
+  background: linear-gradient(90deg, var(--stock-loss), #fb7185);
+}
+
+.summary-card.stock-loss .icon-circle {
+  background: var(--stock-loss-bg);
+}
+
+.summary-card.stock-loss .amount {
+  color: var(--stock-loss);
+}
+
+.summary-card.stock-pl::before {
+  background: linear-gradient(90deg, var(--stock-net), #a78bfa);
+}
+
+.summary-card.stock-pl .icon-circle {
+  background: var(--stock-net-bg);
+}
+
+.summary-card.stock-pl.profit .amount {
+  color: var(--stock-profit);
+}
+
+.summary-card.stock-pl.loss .amount {
+  color: var(--stock-loss);
+}
+
+/* Stock transaction items */
+.tx-item.stock-tx.deposit .tx-icon {
+  background: var(--stock-deposit-bg);
+}
+
+.tx-item.stock-tx.withdraw .tx-icon {
+  background: var(--stock-withdraw-bg);
+}
+
+.tx-item.stock-tx.profit .tx-icon {
+  background: var(--stock-profit-bg);
+}
+
+.tx-item.stock-tx.loss .tx-icon {
+  background: var(--stock-loss-bg);
+}
+
+.tx-item.stock-tx.deposit .tx-amount {
+  color: var(--stock-deposit);
+}
+
+.tx-item.stock-tx.withdraw .tx-amount {
+  color: var(--stock-withdraw);
+}
+
+.tx-item.stock-tx.profit .tx-amount {
+  color: var(--stock-profit);
+}
+
+.tx-item.stock-tx.loss .tx-amount {
+  color: var(--stock-loss);
+}
+
+/* Stock quick action buttons */
+.stock-quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stock-quick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.stock-quick-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.stock-quick-btn.deposit-btn { border-color: var(--stock-deposit); color: var(--stock-deposit); }
+.stock-quick-btn.withdraw-btn { border-color: var(--stock-withdraw); color: var(--stock-withdraw); }
+.stock-quick-btn.profit-btn { border-color: var(--stock-profit); color: var(--stock-profit); }
+.stock-quick-btn.loss-btn { border-color: var(--stock-loss); color: var(--stock-loss); }
+
+.stock-quick-btn:active { transform: scale(0.97); }
+
+/* Stock type toggle in form */
+.stock-type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 20px;
+  gap: 4px;
+}
+
+.stock-type-btn {
+  padding: 10px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-xs);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text-secondary);
+}
+
+.stock-type-btn.active.deposit-btn {
+  background: var(--stock-deposit-bg);
+  color: var(--stock-deposit);
+}
+
+.stock-type-btn.active.withdraw-btn {
+  background: var(--stock-withdraw-bg);
+  color: var(--stock-withdraw);
+}
+
+.stock-type-btn.active.profit-btn {
+  background: var(--stock-profit-bg);
+  color: var(--stock-profit);
+}
+
+.stock-type-btn.active.loss-btn {
+  background: var(--stock-loss-bg);
+  color: var(--stock-loss);
+}
+
+/* Stock filter tabs */
+.stock-filter-tabs {
+  display: flex;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 16px;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.stock-filter-tab {
+  flex: 1;
+  padding: 8px 10px;
+  text-align: center;
+  border-radius: var(--radius-xs);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.75rem;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.stock-filter-tab.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
 /* ========== SAFE AREA ========== */
 @supports (padding: env(safe-area-inset-bottom)) {
   .bottom-nav {

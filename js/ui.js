@@ -549,3 +549,127 @@ export function closePaymentModal() {
   const overlay = document.getElementById('payment-modal-overlay');
   if (overlay) overlay.classList.remove('active');
 }
+
+// ========== STOCK/TRADING PORTFOLIO RENDERING ==========
+export function renderStockSummary(summary) {
+  const el = document.getElementById('stock-summary');
+  if (!el) return;
+
+  const plClass = summary.netPL >= 0 ? 'profit' : 'loss';
+  const plSign = summary.netPL >= 0 ? '+' : '';
+
+  el.innerHTML = `
+    <div class="summary-card stock-net-value">
+      <div class="label"><span class="icon-circle">💼</span> Nilai Portofolio</div>
+      <div class="amount">${formatCurrency(summary.netValue)}</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-card stock-deposit">
+        <div class="label"><span class="icon-circle">📥</span> Total Deposit</div>
+        <div class="amount">${formatCurrency(summary.totalDeposit)}</div>
+      </div>
+      <div class="summary-card stock-withdraw">
+        <div class="label"><span class="icon-circle">📤</span> Total Tarik</div>
+        <div class="amount">${formatCurrency(summary.totalWithdraw)}</div>
+      </div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-card stock-profit">
+        <div class="label"><span class="icon-circle">📈</span> Total Profit</div>
+        <div class="amount">${formatCurrency(summary.totalProfit)}</div>
+      </div>
+      <div class="summary-card stock-loss">
+        <div class="label"><span class="icon-circle">📉</span> Total Loss</div>
+        <div class="amount">${formatCurrency(summary.totalLoss)}</div>
+      </div>
+    </div>
+    <div class="summary-card stock-pl ${plClass}">
+      <div class="label"><span class="icon-circle">⚡</span> Net P&L (Profit/Loss)</div>
+      <div class="amount">${plSign}${formatCurrency(summary.netPL)}</div>
+    </div>
+  `;
+}
+
+export function renderStockTransactions(transactions) {
+  const el = document.getElementById('stock-tx-list');
+  if (!el) return;
+
+  if (!transactions.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <h3>Belum ada catatan</h3>
+        <p>Tap tombol di atas untuk mencatat deposit, withdraw, profit atau loss</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  transactions.forEach(tx => {
+    const date = tx.date;
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(tx);
+  });
+
+  const typeMap = {
+    deposit: { icon: '📥', label: 'Deposit', sign: '+', cls: 'deposit' },
+    withdraw: { icon: '📤', label: 'Withdraw', sign: '-', cls: 'withdraw' },
+    profit: { icon: '📈', label: 'Profit', sign: '+', cls: 'profit' },
+    loss: { icon: '📉', label: 'Loss', sign: '-', cls: 'loss' }
+  };
+
+  let html = '';
+  Object.keys(groups)
+    .sort((a, b) => b.localeCompare(a))
+    .forEach(date => {
+      html += `
+        <div class="tx-date-group">
+          <div class="tx-date-label">${formatDate(date)}</div>
+          <div class="tx-list">
+            ${groups[date].map(tx => {
+        const t = typeMap[tx.type] || typeMap.deposit;
+        return `
+                <div class="tx-item stock-tx ${t.cls}" data-stock-id="${tx.id}">
+                  <div class="tx-icon">${t.icon}</div>
+                  <div class="tx-info">
+                    <div class="tx-desc">${escapeHtml(tx.description || t.label)}</div>
+                    <div class="tx-cat">${t.label}</div>
+                  </div>
+                  <div class="tx-amount">${t.sign}${formatCurrency(tx.amount)}</div>
+                </div>
+              `;
+      }).join('')}
+          </div>
+        </div>
+      `;
+    });
+
+  el.innerHTML = html;
+}
+
+export function openStockModal(title = 'Tambah Transaksi Saham') {
+  const overlay = document.getElementById('stock-modal-overlay');
+  const titleEl = document.getElementById('stock-modal-title');
+  if (overlay) overlay.classList.add('active');
+  if (titleEl) titleEl.textContent = title;
+}
+
+export function closeStockModal() {
+  const overlay = document.getElementById('stock-modal-overlay');
+  if (overlay) overlay.classList.remove('active');
+  resetStockForm();
+}
+
+export function resetStockForm() {
+  const form = document.getElementById('stock-form');
+  if (form) form.reset();
+  // Reset type toggle
+  document.querySelectorAll('#stock-form .stock-type-btn').forEach(b => b.classList.remove('active'));
+  const depositBtn = document.querySelector('#stock-form .deposit-btn');
+  if (depositBtn) depositBtn.classList.add('active');
+  // Set today's date
+  const dateInput = document.getElementById('stock-date');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+}

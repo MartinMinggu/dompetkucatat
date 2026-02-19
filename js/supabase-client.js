@@ -406,3 +406,75 @@ export async function getDebtSummary() {
 
     return { totalUtang, totalPiutang, countUtang, countPiutang };
 }
+
+// ========== STOCK/TRADING PORTFOLIO CRUD ==========
+export async function getStockTransactions({ type, startDate, endDate, search } = {}) {
+    let query = supabase
+        .from('stock_transactions')
+        .select('*')
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false });
+
+    if (type) query = query.eq('type', type);
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    let results = data || [];
+
+    if (search) {
+        const q = search.toLowerCase();
+        results = results.filter(
+            (t) => (t.description && t.description.toLowerCase().includes(q))
+        );
+    }
+
+    return results;
+}
+
+export async function addStockTransaction({ type, amount, description, date }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+        .from('stock_transactions')
+        .insert({
+            type,
+            amount: Math.round(amount),
+            description: description || '',
+            date: date || todayISO(),
+            user_id: user.id
+        })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function deleteStockTransaction(id) {
+    const { error } = await supabase
+        .from('stock_transactions')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+}
+
+export async function getStockSummary() {
+    const { data, error } = await supabase
+        .from('stock_transactions')
+        .select('*');
+
+    if (error) throw error;
+    const txs = data || [];
+
+    const totalDeposit = txs.filter(t => t.type === 'deposit').reduce((s, t) => s + t.amount, 0);
+    const totalWithdraw = txs.filter(t => t.type === 'withdraw').reduce((s, t) => s + t.amount, 0);
+    const totalProfit = txs.filter(t => t.type === 'profit').reduce((s, t) => s + t.amount, 0);
+    const totalLoss = txs.filter(t => t.type === 'loss').reduce((s, t) => s + t.amount, 0);
+    const netValue = totalDeposit - totalWithdraw + totalProfit - totalLoss;
+    const netPL = totalProfit - totalLoss;
+
+    return { totalDeposit, totalWithdraw, totalProfit, totalLoss, netValue, netPL };
+}

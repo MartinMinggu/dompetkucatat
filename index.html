@@ -359,6 +359,68 @@
         <div id="debt-detail-content"></div>
       </div>
 
+      <!-- ===== STOCKS / PORTFOLIO VIEW ===== -->
+      <div id="view-stocks" class="view">
+        <h2 class="view-title">📊 Portofolio Saham & Trading</h2>
+
+        <!-- Summary Cards -->
+        <div id="stock-summary" class="summary-grid">
+          <div class="summary-card stock-net-value">
+            <div class="label"><span class="icon-circle">💼</span> Nilai Portofolio</div>
+            <div class="amount">Rp0</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-card stock-deposit">
+              <div class="label"><span class="icon-circle">📥</span> Total Deposit</div>
+              <div class="amount">Rp0</div>
+            </div>
+            <div class="summary-card stock-withdraw">
+              <div class="label"><span class="icon-circle">📤</span> Total Tarik</div>
+              <div class="amount">Rp0</div>
+            </div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-card stock-profit">
+              <div class="label"><span class="icon-circle">📈</span> Total Profit</div>
+              <div class="amount">Rp0</div>
+            </div>
+            <div class="summary-card stock-loss">
+              <div class="label"><span class="icon-circle">📉</span> Total Loss</div>
+              <div class="amount">Rp0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="stock-quick-actions">
+          <button class="stock-quick-btn deposit-btn" data-stype="deposit">📥 Deposit</button>
+          <button class="stock-quick-btn withdraw-btn" data-stype="withdraw">📤 Withdraw</button>
+          <button class="stock-quick-btn profit-btn" data-stype="profit">📈 Profit</button>
+          <button class="stock-quick-btn loss-btn" data-stype="loss">📉 Loss</button>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="stock-filter-tabs">
+          <button class="stock-filter-tab active" data-sfilter="all">Semua</button>
+          <button class="stock-filter-tab" data-sfilter="deposit">📥 Deposit</button>
+          <button class="stock-filter-tab" data-sfilter="withdraw">📤 Tarik</button>
+          <button class="stock-filter-tab" data-sfilter="profit">📈 Profit</button>
+          <button class="stock-filter-tab" data-sfilter="loss">📉 Loss</button>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="section-header">
+          <h3>Riwayat Transaksi</h3>
+        </div>
+        <div id="stock-tx-list">
+          <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <h3>Belum ada catatan</h3>
+            <p>Tap tombol di atas untuk mencatat deposit, withdraw, profit atau loss</p>
+          </div>
+        </div>
+      </div>
+
     </main>
 
     <!-- ========== BOTTOM NAVIGATION ========== -->
@@ -392,6 +454,14 @@
           <line x1="5" y1="12" x2="19" y2="12" />
         </svg>
       </button>
+      <button class="nav-item" data-view="view-stocks">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+          <polyline points="16 7 22 7 22 13" />
+        </svg>
+        <span>Saham</span>
+      </button>
       <button class="nav-item" data-view="view-debts">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
@@ -401,15 +471,6 @@
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
         <span>Utang</span>
-      </button>
-      <button class="nav-item" data-view="view-report">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="20" x2="18" y2="10" />
-          <line x1="12" y1="20" x2="12" y2="4" />
-          <line x1="6" y1="20" x2="6" y2="14" />
-        </svg>
-        <span>Laporan</span>
       </button>
     </nav>
 
@@ -546,6 +607,51 @@
           </div>
 
           <button type="submit" class="btn btn-primary" style="margin-top:8px">Simpan Pembayaran</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ========== STOCK MODAL ========== -->
+    <div id="stock-modal-overlay" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-header">
+          <h2 id="stock-modal-title">Tambah Transaksi Saham</h2>
+          <button id="stock-modal-close" class="btn-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <form id="stock-form">
+          <!-- Stock Type Toggle -->
+          <div class="stock-type-toggle">
+            <button type="button" class="stock-type-btn deposit-btn active" data-stype="deposit">📥 Deposit</button>
+            <button type="button" class="stock-type-btn withdraw-btn" data-stype="withdraw">📤 Withdraw</button>
+            <button type="button" class="stock-type-btn profit-btn" data-stype="profit">📈 Profit</button>
+            <button type="button" class="stock-type-btn loss-btn" data-stype="loss">📉 Loss</button>
+          </div>
+
+          <div class="form-group">
+            <label for="stock-amount">Jumlah (Rp)</label>
+            <input type="number" id="stock-amount" class="form-control" placeholder="1000000" required min="1"
+              inputmode="numeric">
+          </div>
+
+          <div class="form-group">
+            <label for="stock-description">Deskripsi (opsional)</label>
+            <input type="text" id="stock-description" class="form-control" placeholder="Beli saham BBCA, Jual TLKM, dll">
+          </div>
+
+          <div class="form-group">
+            <label for="stock-date">Tanggal</label>
+            <input type="date" id="stock-date" class="form-control" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top:8px">Simpan</button>
         </form>
       </div>
     </div>
