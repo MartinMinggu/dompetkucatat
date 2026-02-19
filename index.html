@@ -300,6 +300,30 @@
           </button>
         </div>
 
+        <!-- Export Buttons -->
+        <div class="export-actions">
+          <button id="btn-export-csv" class="btn-export" title="Export CSV">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export CSV
+          </button>
+          <button id="btn-export-pdf" class="btn-export" title="Export PDF">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            Export PDF
+          </button>
+        </div>
+
         <!-- Summary -->
         <div id="report-summary" class="report-summary"></div>
 
@@ -411,6 +435,15 @@
         <!-- Transaction History -->
         <div class="section-header">
           <h3>Riwayat Transaksi</h3>
+          <button id="btn-export-stock-csv" class="btn-export btn-sm" title="Export CSV">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            CSV
+          </button>
         </div>
         <div id="stock-tx-list">
           <div class="empty-state">
@@ -471,6 +504,15 @@
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
         <span>Utang</span>
+      </button>
+      <button class="nav-item" data-view="view-report">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+        <span>Laporan</span>
       </button>
     </nav>
 
@@ -643,7 +685,8 @@
 
           <div class="form-group">
             <label for="stock-description">Deskripsi (opsional)</label>
-            <input type="text" id="stock-description" class="form-control" placeholder="Beli saham BBCA, Jual TLKM, dll">
+            <input type="text" id="stock-description" class="form-control"
+              placeholder="Beli saham BBCA, Jual TLKM, dll">
           </div>
 
           <div class="form-group">

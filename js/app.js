@@ -22,6 +22,7 @@ import {
 } from './ui.js';
 import { renderDoughnutChart, renderBarChart } from './chart.js';
 import { registerSW } from './sw-register.js';
+import { exportReportToCSV, exportReportToPDF, exportStockTransactionsToCSV } from './export.js';
 
 // ========== STATE ==========
 let categories = [];
@@ -32,6 +33,7 @@ let debtFilterType = 'all';
 let debtFilterStatus = 'active';
 let currentDebtId = null;
 let stockFilterType = 'all';
+let currentReportData = null;
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
@@ -81,6 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindReportEvents();
     bindDebtEvents();
     bindStockEvents();
+    bindExportEvents();
     bindSettingsEvents();
 });
 
@@ -264,6 +267,7 @@ async function loadCategories() {
 async function loadReport() {
     try {
         const report = await getMonthlyReport(reportYear, reportMonth);
+        currentReportData = report;
         renderReport(reportYear, reportMonth, report);
     } catch (err) {
         console.error('[Report]', err);
@@ -850,6 +854,43 @@ function bindStockEvents() {
             } catch (err) {
                 showToast('Gagal menghapus: ' + err.message, 'error');
             }
+        }
+    });
+}
+
+// ========== EXPORT ==========
+function bindExportEvents() {
+    // Report CSV export
+    document.getElementById('btn-export-csv')?.addEventListener('click', () => {
+        if (!currentReportData || !currentReportData.transactions.length) {
+            showToast('Tidak ada data untuk di-export', 'error');
+            return;
+        }
+        exportReportToCSV(currentReportData, reportYear, reportMonth);
+        showToast('CSV berhasil di-download 📄');
+    });
+
+    // Report PDF export
+    document.getElementById('btn-export-pdf')?.addEventListener('click', () => {
+        if (!currentReportData || !currentReportData.transactions.length) {
+            showToast('Tidak ada data untuk di-export', 'error');
+            return;
+        }
+        exportReportToPDF(currentReportData, reportYear, reportMonth);
+    });
+
+    // Stock CSV export
+    document.getElementById('btn-export-stock-csv')?.addEventListener('click', async () => {
+        try {
+            const transactions = await getStockTransactions();
+            if (!transactions.length) {
+                showToast('Tidak ada data saham untuk di-export', 'error');
+                return;
+            }
+            exportStockTransactionsToCSV(transactions);
+            showToast('CSV saham berhasil di-download 📄');
+        } catch (err) {
+            showToast('Gagal export: ' + err.message, 'error');
         }
     });
 }

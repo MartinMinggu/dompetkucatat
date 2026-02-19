@@ -1907,12 +1907,29 @@ select.form-control {
   box-shadow: var(--shadow-sm);
 }
 
-.stock-quick-btn.deposit-btn { border-color: var(--stock-deposit); color: var(--stock-deposit); }
-.stock-quick-btn.withdraw-btn { border-color: var(--stock-withdraw); color: var(--stock-withdraw); }
-.stock-quick-btn.profit-btn { border-color: var(--stock-profit); color: var(--stock-profit); }
-.stock-quick-btn.loss-btn { border-color: var(--stock-loss); color: var(--stock-loss); }
+.stock-quick-btn.deposit-btn {
+  border-color: var(--stock-deposit);
+  color: var(--stock-deposit);
+}
 
-.stock-quick-btn:active { transform: scale(0.97); }
+.stock-quick-btn.withdraw-btn {
+  border-color: var(--stock-withdraw);
+  color: var(--stock-withdraw);
+}
+
+.stock-quick-btn.profit-btn {
+  border-color: var(--stock-profit);
+  color: var(--stock-profit);
+}
+
+.stock-quick-btn.loss-btn {
+  border-color: var(--stock-loss);
+  color: var(--stock-loss);
+}
+
+.stock-quick-btn:active {
+  transform: scale(0.97);
+}
 
 /* Stock type toggle in form */
 .stock-type-toggle {
@@ -1988,6 +2005,50 @@ select.form-control {
   background: var(--bg-card);
   color: var(--text-primary);
   box-shadow: var(--shadow-sm);
+}
+
+/* ========== EXPORT BUTTONS ========== */
+.export-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: var(--transition);
+  backdrop-filter: blur(8px);
+}
+
+.btn-export:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-export:active {
+  transform: scale(0.97);
+}
+
+.btn-export.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+}
+
+.btn-export svg {
+  flex-shrink: 0;
 }
 
 /* ========== SAFE AREA ========== */
