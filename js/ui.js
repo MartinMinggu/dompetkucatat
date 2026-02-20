@@ -673,3 +673,99 @@ export function resetStockForm() {
   const dateInput = document.getElementById('stock-date');
   if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
 }
+
+// ========== PURCHASE PLAN (RENCANA PEMBELIAN) RENDERING ==========
+const URGENSI_MAP = {
+  DARURAT: { icon: '🔴', label: 'Darurat', cls: 'urgency-darurat' },
+  PENTING: { icon: '🟠', label: 'Penting', cls: 'urgency-penting' },
+  NORMAL: { icon: '🔵', label: 'Normal', cls: 'urgency-normal' },
+  KEINGINAN: { icon: '⚪', label: 'Keinginan', cls: 'urgency-keinginan' }
+};
+
+const STATUS_MAP = {
+  DIRANCANG: { icon: '📝', label: 'Dirancang', cls: 'status-dirancang' },
+  DIPERTIMBANGKAN: { icon: '🤔', label: 'Dipertimbangkan', cls: 'status-dipertimbangkan' },
+  DIBELI: { icon: '✅', label: 'Dibeli', cls: 'status-dibeli' },
+  DIBATALKAN: { icon: '❌', label: 'Dibatalkan', cls: 'status-dibatalkan' },
+  TIDAK_JADI_DIBUTUHKAN: { icon: '🚫', label: 'Tidak Dibutuhkan', cls: 'status-tidak-dibutuhkan' }
+};
+
+export function renderPurchasePlanList(plans) {
+  const container = document.getElementById('purchase-plan-list');
+  if (!container) return;
+
+  if (!plans.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🛒</div>
+        <h3>Belum ada rencana</h3>
+        <p>Tap tombol di atas untuk menambah rencana pembelian</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = plans.map(plan => {
+    const urg = URGENSI_MAP[plan.urgensi] || URGENSI_MAP.NORMAL;
+    const sts = STATUS_MAP[plan.status] || STATUS_MAP.DIRANCANG;
+    const isFinished = ['DIBELI', 'DIBATALKAN', 'TIDAK_JADI_DIBUTUHKAN'].includes(plan.status);
+    const dateStr = new Date(plan.tanggal_dicatat + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    return `
+      <div class="pp-card ${isFinished ? 'pp-finished' : ''}" data-pp-id="${plan.id}">
+        <div class="pp-card-header">
+          <div class="pp-badges">
+            <span class="pp-urgency-badge ${urg.cls}">${urg.icon} ${urg.label}</span>
+            <span class="pp-status-badge ${sts.cls}">${sts.icon} ${sts.label}</span>
+          </div>
+        </div>
+        <div class="pp-card-body">
+          <div class="pp-name">${escapeHtml(plan.nama_barang)}</div>
+          <div class="pp-price">${formatCurrency(plan.perkiraan_harga)}</div>
+          ${plan.catatan ? `<div class="pp-note">${escapeHtml(plan.catatan)}</div>` : ''}
+          <div class="pp-date">📅 ${dateStr}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+export function openPurchasePlanModal(title = 'Tambah Rencana Pembelian') {
+  const overlay = document.getElementById('pp-modal-overlay');
+  const titleEl = document.getElementById('pp-modal-title');
+  if (overlay) overlay.classList.add('active');
+  if (titleEl) titleEl.textContent = title;
+}
+
+export function closePurchasePlanModal() {
+  const overlay = document.getElementById('pp-modal-overlay');
+  if (overlay) overlay.classList.remove('active');
+}
+
+export function resetPurchasePlanForm() {
+  const form = document.getElementById('pp-form');
+  if (form) {
+    form.reset();
+    form.dataset.editId = '';
+  }
+  // Reset urgensi to NORMAL
+  const urgensiSelect = document.getElementById('pp-urgensi');
+  if (urgensiSelect) urgensiSelect.value = 'NORMAL';
+  // Reset status to DIRANCANG
+  const statusSelect = document.getElementById('pp-status');
+  if (statusSelect) statusSelect.value = 'DIRANCANG';
+  // Set today's date
+  const dateInput = document.getElementById('pp-date');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+}
+
+export function fillPurchasePlanForm(plan) {
+  const form = document.getElementById('pp-form');
+  if (!form) return;
+  form.dataset.editId = plan.id;
+  document.getElementById('pp-nama').value = plan.nama_barang || '';
+  document.getElementById('pp-harga').value = plan.perkiraan_harga || '';
+  document.getElementById('pp-date').value = plan.tanggal_dicatat || '';
+  document.getElementById('pp-urgensi').value = plan.urgensi || 'NORMAL';
+  document.getElementById('pp-status').value = plan.status || 'DIRANCANG';
+  document.getElementById('pp-catatan').value = plan.catatan || '';
+}
+

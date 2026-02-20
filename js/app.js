@@ -6,6 +6,7 @@ import {
     getDebts, addDebt, updateDebt, deleteDebt,
     getDebtPayments, addDebtPayment, deleteDebtPayment, getDebtSummary,
     getStockTransactions, addStockTransaction, deleteStockTransaction, getStockSummary,
+    getPurchasePlans, addPurchasePlan, updatePurchasePlan, deletePurchasePlan,
     hasSupabaseConfig, saveSupabaseConfig, clearSupabaseConfig
 } from './supabase-client.js';
 import { initAuth, setAuthCallback, signUp, signIn, signOut, getSession } from './auth.js';
@@ -18,7 +19,9 @@ import {
     openDebtModal, closeDebtModal, resetDebtForm, fillDebtForm,
     openPaymentModal, closePaymentModal,
     renderStockSummary, renderStockTransactions,
-    openStockModal, closeStockModal, resetStockForm
+    openStockModal, closeStockModal, resetStockForm,
+    renderPurchasePlanList,
+    openPurchasePlanModal, closePurchasePlanModal, resetPurchasePlanForm, fillPurchasePlanForm
 } from './ui.js';
 import { renderDoughnutChart, renderBarChart } from './chart.js';
 import { registerSW } from './sw-register.js';
@@ -34,6 +37,8 @@ let debtFilterStatus = 'active';
 let currentDebtId = null;
 let stockFilterType = 'all';
 let currentReportData = null;
+let ppFilterUrgensi = 'all';
+let ppFilterStatus = 'all';
 
 // ========== INIT ==========
 document.addEventListener('DOMContentLoaded', async () => {
@@ -83,6 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     bindReportEvents();
     bindDebtEvents();
     bindStockEvents();
+    bindPurchasePlanEvents();
     bindExportEvents();
     bindSettingsEvents();
 });
@@ -200,6 +206,7 @@ function bindNavEvents() {
             if (viewId === 'view-report') await loadReport();
             if (viewId === 'view-debts') await loadDebts();
             if (viewId === 'view-stocks') await loadStocks();
+            if (viewId === 'view-purchase-plans') await loadPurchasePlans();
         });
     });
 }
@@ -936,3 +943,154 @@ function bindSettingsEvents() {
         }
     });
 }
+
+// ========== PURCHASE PLANS (RENCANA PEMBELIAN) ==========
+async function loadPurchasePlans() {
+    try {
+        const filters = {};
+        if (ppFilterUrgensi !== 'all') filters.urgensi = ppFilterUrgensi;
+        if (ppFilterStatus !== 'all') filters.status = ppFilterStatus;
+        const plans = await getPurchasePlans(filters);
+        renderPurchasePlanList(plans);
+    } catch (err) {
+        console.error('[PurchasePlans]', err);
+        showToast('Gagal memuat rencana pembelian', 'error');
+    }
+}
+
+function bindPurchasePlanEvents() {
+    // Urgency filter tabs
+    document.querySelectorAll('.pp-filter-tab').forEach(tab => {
+        tab.addEventListener('click', async () => {
+            document.querySelectorAll('.pp-filter-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            ppFilterUrgensi = tab.dataset.ppUrgensi;
+            await loadPurchasePlans();
+        });
+    });
+
+    // Status filter
+    document.querySelectorAll('.pp-status-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            document.querySelectorAll('.pp-status-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            ppFilterStatus = btn.dataset.ppStatus;
+            await loadPurchasePlans();
+        });
+    });
+
+    // Add button
+    document.getElementById('btn-add-pp')?.addEventListener('click', () => {
+        resetPurchasePlanForm();
+        openPurchasePlanModal('Tambah Rencana Pembelian');
+    });
+
+    // Modal close
+    document.getElementById('pp-modal-close')?.addEventListener('click', closePurchasePlanModal);
+    document.getElementById('pp-modal-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'pp-modal-overlay') closePurchasePlanModal();
+    });
+
+    // Form submit
+    const ppForm = document.getElementById('pp-form');
+    if (ppForm) {
+        ppForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const editId = ppForm.dataset.editId;
+            const nama_barang = document.getElementById('pp-nama').value.trim();
+            const perkiraan_harga = parseInt(document.getElementById('pp-harga').value, 10);
+            const tanggal_dicatat = document.getElementById('pp-date').value || todayISO();
+            const urgensi = document.getElementById('pp-urgensi').value;
+            const status = document.getElementById('pp-status').value;
+            const catatan = document.getElementById('pp-catatan').value.trim();
+
+            if (!nama_barang) {
+                showToast('Masukkan nama barang', 'error');
+                return;
+            }
+            if (!perkiraan_harga || perkiraan_harga <= 0) {
+                showToast('Masukkan harga yang valid', 'error');
+                return;
+            }
+
+            try {
+                if (editId) {
+                    await updatePurchasePlan(editId, { nama_barang, perkiraan_harga, tanggal_dicatat, urgensi, status, catatan });
+                    showToast('Rencana diperbarui ✅');
+                } else {
+                    await addPurchasePlan({ nama_barang, perkiraan_harga, tanggal_dicatat, urgensi, status, catatan });
+                    showToast('Rencana ditambahkan ✅');
+                }
+                closePurchasePlanModal();
+                if (currentView === 'view-purchase-plans') await loadPurchasePlans();
+            } catch (err) {
+                console.error('[PPForm]', err);
+                showToast('Gagal menyimpan: ' + err.message, 'error');
+            }
+        });
+    }
+
+    // Click plan card => action menu
+    document.addEventListener('click', async (e) => {
+        const ppCard = e.target.closest('.pp-card');
+        if (!ppCard) return;
+        // Only handle if we're in the purchase plans view
+        if (currentView !== 'view-purchase-plans') return;
+
+        const ppId = ppCard.dataset.ppId;
+        if (!ppId) return;
+
+        const action = await showPurchasePlanActions();
+        if (action === 'edit') {
+            try {
+                const plans = await getPurchasePlans();
+                const plan = plans.find(p => p.id === ppId);
+                if (plan) {
+                    fillPurchasePlanForm(plan);
+                    openPurchasePlanModal('Edit Rencana Pembelian');
+                }
+            } catch (err) {
+                showToast('Gagal memuat data', 'error');
+            }
+        } else if (action === 'delete') {
+            if (confirm('Hapus rencana pembelian ini?')) {
+                try {
+                    await deletePurchasePlan(ppId);
+                    showToast('Rencana dihapus 🗑️');
+                    await loadPurchasePlans();
+                } catch (err) {
+                    showToast('Gagal menghapus: ' + err.message, 'error');
+                }
+            }
+        }
+    });
+}
+
+function showPurchasePlanActions() {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay active';
+        overlay.style.alignItems = 'center';
+        overlay.innerHTML = `
+      <div class="modal" style="border-radius:var(--radius);max-width:300px;text-align:center;transform:none">
+        <div class="modal-handle"></div>
+        <h3 style="margin-bottom:20px;font-size:1rem">Pilih Aksi</h3>
+        <div style="display:flex;gap:12px">
+          <button class="btn btn-primary" style="flex:1" data-action="edit">✏️ Edit</button>
+          <button class="btn btn-danger" style="flex:1" data-action="delete">🗑️ Hapus</button>
+        </div>
+        <button class="btn btn-ghost" style="width:100%;margin-top:12px" data-action="cancel">Batal</button>
+      </div>
+    `;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', (e) => {
+            const action = e.target.dataset.action;
+            if (action || e.target === overlay) {
+                overlay.remove();
+                resolve(action || 'cancel');
+            }
+        });
+    });
+}
+

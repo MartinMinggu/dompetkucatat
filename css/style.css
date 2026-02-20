@@ -2057,3 +2057,229 @@ select.form-control {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* ========== PURCHASE PLAN (RENCANA PEMBELIAN) ========== */
+.pp-filter-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.pp-filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.pp-filter-tab {
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-glass);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pp-filter-tab.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.pp-status-filter {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.pp-status-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.pp-status-btn {
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border-glass);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pp-status-btn.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+/* Purchase Plan Card */
+.pp-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.pp-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent);
+}
+
+.pp-card:hover {
+  border-color: var(--accent);
+  transform: translateX(4px);
+}
+
+.pp-card:active {
+  transform: scale(0.98);
+}
+
+.pp-card.pp-finished {
+  opacity: 0.6;
+}
+
+.pp-card-header {
+  margin-bottom: 10px;
+}
+
+.pp-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pp-urgency-badge,
+.pp-status-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Urgency badge colors */
+.pp-urgency-badge.urgency-darurat {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.pp-urgency-badge.urgency-penting {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.pp-urgency-badge.urgency-normal {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.pp-urgency-badge.urgency-keinginan {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
+/* Status badge colors */
+.pp-status-badge.status-dirancang {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
+.pp-status-badge.status-dipertimbangkan {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.pp-status-badge.status-dibeli {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.pp-status-badge.status-dibatalkan {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.pp-status-badge.status-tidak-dibutuhkan {
+  background: rgba(100, 116, 139, 0.15);
+  color: #64748b;
+}
+
+.pp-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pp-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pp-price {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.pp-note {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.pp-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Nav adjustment for more items */
+.nav-item {
+  padding: 8px 10px;
+  min-width: 48px;
+  font-size: 0.625rem;
+}
+
+@media (max-width: 420px) {
+  .nav-item {
+    padding: 6px 6px;
+    min-width: 40px;
+    font-size: 0.5625rem;
+  }
+
+  .nav-item svg {
+    width: 20px;
+    height: 20px;
+  }
+}

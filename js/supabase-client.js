@@ -478,3 +478,67 @@ export async function getStockSummary() {
 
     return { totalDeposit, totalWithdraw, totalProfit, totalLoss, netValue, netPL };
 }
+
+// ========== PURCHASE PLANS (RENCANA PEMBELIAN) CRUD ==========
+export async function getPurchasePlans({ urgensi, status } = {}) {
+    let query = supabase
+        .from('purchase_plans')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (urgensi) query = query.eq('urgensi', urgensi);
+    if (status) query = query.eq('status', status);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+}
+
+export async function addPurchasePlan({ nama_barang, perkiraan_harga, tanggal_dicatat, urgensi, status, catatan }) {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+        .from('purchase_plans')
+        .insert({
+            nama_barang,
+            perkiraan_harga: Math.round(perkiraan_harga),
+            tanggal_dicatat: tanggal_dicatat || todayISO(),
+            urgensi: urgensi || 'NORMAL',
+            status: status || 'DIRANCANG',
+            catatan: catatan || '',
+            user_id: user.id
+        })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function updatePurchasePlan(id, updates) {
+    const updateData = { updated_at: new Date().toISOString() };
+    if (updates.nama_barang !== undefined) updateData.nama_barang = updates.nama_barang;
+    if (updates.perkiraan_harga !== undefined) updateData.perkiraan_harga = Math.round(updates.perkiraan_harga);
+    if (updates.tanggal_dicatat !== undefined) updateData.tanggal_dicatat = updates.tanggal_dicatat;
+    if (updates.urgensi !== undefined) updateData.urgensi = updates.urgensi;
+    if (updates.status !== undefined) updateData.status = updates.status;
+    if (updates.catatan !== undefined) updateData.catatan = updates.catatan;
+
+    const { data, error } = await supabase
+        .from('purchase_plans')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function deletePurchasePlan(id) {
+    const { error } = await supabase
+        .from('purchase_plans')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+}
